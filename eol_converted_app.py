@@ -7,8 +7,9 @@ class ArgInitializer(ArgumentParser):
 
     def __init__(self):
         super(ArgInitializer, self).__init__()
+        self._add_options()
 
-    def addOptions(self):
+    def _add_options(self):
         self.add_help = True
         self.description = 'EOL Converter Application'
         group = self.add_mutually_exclusive_group()
@@ -18,43 +19,66 @@ class ArgInitializer(ArgumentParser):
                 help='File Path where the conversion needs to take place')
         self.add_argument('-e','--eol',type=str,required=True
                 ,help='End of line for files in folder / single file')
+        self.add_argument('-rcsz','--readChunkSz',type=int,
+                help='Multiple of 1024 Bytes while reading the data(Helpful in LazyRead of large data)')
+        self.add_argument('-wcsz','--writeChunkSz',type=int,
+                help='Multiple of 1024 Bytes while writing the data(Helpful in LazyRead of large data)')
 
 
-def readInChunks(fileObj, chunkSize=4096):
-    """
-    Lazy function to read a file piece by piece.
-    Default chunk size: 4kB.
-    """
-    while True:
-        data = fileObj.read(chunkSize)
-        if not data:
-            break
-        yield data
+
+
+class EOLConverter(object):
+
+    def __init__(self, arg_init):
+        self.MATCH_REGEX = b'(?<!\r)\n|\r(?!\n)' if arg_init.eol == 'CRLF' else b'(?<=\r)\n|\r(?=\n)'
+        self.REPLACE_REG = b'\r\n' if arg_init.eol == 'CRLF' else b'\n'
+        self.wcz = 1024*(arg_init.writeChunkSz if arg_init.writeChunkSz else 16)
+        self.rcz = 1024*(arg_init.writeChunkSz if arg_init.readChunkSz else 4)
+        self.file = arg_init.file
+        self.eol = arg_init.eol
+    
+    def readInChunks(self, fileObj, chunkSize=4096):
+        """
+        Lazy function to read a file piece by piece.
+        Default chunk size: 4kB.
+        """
+        while True:
+            data = fileObj.read(chunkSize)
+            if not data:
+                break
+            yield data
+
+    def read_file(self):
+        st = time()
+        with open(path.abspath(self.file), 'rb') as _file:
+            with open('a.proto','wb') as _wf:
+                for line in self.readInChunks(_file,chunkSize=rcz):
+                    wline = []
+                    wline.append(re.sub(MATCH_REGEX, REPLACE_REG, line, 0, re.DOTALL))
+                    print(wline)
+                    _wf.write(b''.join(wline))
+        end = time()
+        print('Execution Time For Reading & Writing in new File %.8f' % (end - st))
+
+    def write_file(self):
+        st = time()
+        with open('converted.proto','rb') as _rf:
+            with open(path.abspath(self.file), 'wb') as _wf:
+                for line in self.readInChunks(_rf, chunkSize=wcz):
+                    _wf.write(line)
+            _rf.flush()
+
+        end = time()
+        print('Execution Time in Writing the Read File in the earlier Read File %.8f' % (end - st))
+
+    def convert_EOL(self):
+        read_file()
+        write_file()
+
+
 
 if __name__ == "__main__":
     parser = ArgInitializer()
-    parser.addOptions()
     cmd_args = parser.parse_args()
-    st = time()
-    if cmd_args.file:
-        
-        with open(path.abspath(cmd_args.file), 'rb') as _file:
-            print('Inside It!!')
-            for line in readInChunks(_file):
-                print(line)
-                print(re.sub(b'(?<!\r)\n|\r(?!\n)',b'\r\n',line,0, re.DOTALL))
-                # a = re.finditer(b'(?<!\r)\n|\r(?!\n)',line,re.DOTALL)
-                # for i in a:
-                #     print(i)
-                # print(a)
-                
-
-                if len(line) > 1 and line[-3] == b'\r\n':
-                    print('CRLF')
-                elif line[-1] == b'\n':
-                    print('LF')
-                else:
-                    print('None')
-        
-        end = time()
-        print('Execution Time %.8f' % (end - st))
+    converter = EOLConverter(cmd_args)
+    converter.convert_EOL()
