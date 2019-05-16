@@ -36,6 +36,7 @@ class EOLConverter(object):
         self.rcz = 1024*(arg_init.writeChunkSz if arg_init.readChunkSz else 4)
         self.file = arg_init.file
         self.eol = arg_init.eol
+        self._ext = path.splitext(self.file)[1][1:].strip()
     
     def readInChunks(self, fileObj, chunkSize=4096):
         """
@@ -50,11 +51,12 @@ class EOLConverter(object):
 
     def read_file(self):
         st = time()
+        mreg, rpreg = self.MATCH_REGEX, self.REPLACE_REG
         with open(path.abspath(self.file), 'rb') as _file:
-            with open('a.proto','wb') as _wf:
-                for line in self.readInChunks(_file,chunkSize=rcz):
+            with open('converted.'+self._ext,'wb') as _wf:
+                for line in self.readInChunks(_file,chunkSize=self.rcz):
                     wline = []
-                    wline.append(re.sub(MATCH_REGEX, REPLACE_REG, line, 0, re.DOTALL))
+                    wline.append(re.sub(mreg, rpreg, line, 0, re.DOTALL))
                     print(wline)
                     _wf.write(b''.join(wline))
         end = time()
@@ -62,9 +64,9 @@ class EOLConverter(object):
 
     def write_file(self):
         st = time()
-        with open('converted.proto','rb') as _rf:
+        with open('converted.'+self._ext,'rb') as _rf:
             with open(path.abspath(self.file), 'wb') as _wf:
-                for line in self.readInChunks(_rf, chunkSize=wcz):
+                for line in self.readInChunks(_rf, chunkSize=self.wcz):
                     _wf.write(line)
             _rf.flush()
 
@@ -72,8 +74,8 @@ class EOLConverter(object):
         print('Execution Time in Writing the Read File in the earlier Read File %.8f' % (end - st))
 
     def convert_EOL(self):
-        read_file()
-        write_file()
+        self.read_file()
+        self.write_file()
 
 
 
