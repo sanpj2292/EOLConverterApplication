@@ -15,7 +15,7 @@ python eol_converter_app.py -f mypath/to/file.some_ext -e CRLF -rcz 5 -wcz 6
 
 -wcz --> Write Chunk Size(In multiples of 1024 B)
 
-###### Special Feature
+## Special Feature
 Handles large files in an efficient and quick manner by making use of lazy-read & write
 
 ##### Output for large files
