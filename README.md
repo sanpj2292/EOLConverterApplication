@@ -18,10 +18,10 @@ Handles large files in an efficient and quick manner by making use of lazy-read 
 
 ##### Output for large files
 
-.proto file 327753 KB -> 6.51064 sec with 8kb read-chunk while converting to LF
+.proto file 327753 KB -> 6.55064 sec with 8kb read-chunk while converting to LF
 
-.proto file 327753 KB -> 6.36263 sec with 8kb read-chunk while converting to CRLF
+.proto file 327753 KB -> 6.44263 sec with 8kb read-chunk while converting to CRLF
 
-.proto file 327753 KB -> 6.04634 sec with 16kb read-chunk while converting to LF
+.proto file 327753 KB -> 6.10634 sec with 16kb read-chunk while converting to LF
 
-.proto file 327753 KB -> 5.94655 sec with 8kb read-chunk while converting to CRLF
+.proto file 327753 KB -> 6.10655 sec with 8kb read-chunk while converting to CRLF
