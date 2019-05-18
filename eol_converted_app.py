@@ -1,5 +1,5 @@
 import re
-from os import listdir, path
+from os import listdir, path, remove, rename
 from argparse import ArgumentParser
 from time import time
 
@@ -21,8 +21,6 @@ class ArgInitializer(ArgumentParser):
                 ,help='End of line for files in folder / single file')
         self.add_argument('-rcsz','--readChunkSz',type=int,
                 help='Multiple of 1024 Bytes while reading the data(Helpful in LazyRead of large data)')
-        self.add_argument('-wcsz','--writeChunkSz',type=int,
-                help='Multiple of 1024 Bytes while writing the data(Helpful in LazyRead of large data)')
 
 
 
@@ -32,7 +30,6 @@ class EOLConverter(object):
     def __init__(self, arg_init):
         self.MATCH_REGEX = b'(?<!\r)\n|\r(?!\n)' if arg_init.eol == 'CRLF' else b'(?<=\r)\n|\r(?=\n)'
         self.REPLACE_REG = b'\r\n' if arg_init.eol == 'CRLF' else b'\n'
-        self.wcz = 1024*(arg_init.writeChunkSz if arg_init.writeChunkSz else 16)
         self.rcz = 1024*(arg_init.writeChunkSz if arg_init.readChunkSz else 4)
         self.file = arg_init.file
         self.eol = arg_init.eol
@@ -65,7 +62,6 @@ class EOLConverter(object):
                     wline = []
                     if re.search(mreg, line):      
                         wline.append(re.sub(mreg, rpreg, line, 0, re.DOTALL))
-                        print(wline)
                         _wf.write(b''.join(wline))
                     else:
                         print('The file with name {file} has CRLF EOL'.format(
@@ -85,12 +81,12 @@ class EOLConverter(object):
     def write_file(self):
         if self._should_write:
             st = time()
+            # Delete the original file
+            remove(self.file)
             fo_nm, cf_nm = self._get_pseud_conv_fDet()
-            with open(path.join(fo_nm, cf_nm),'rb') as _rf:
-                with open(path.abspath(self.file), 'wb') as _wf:
-                    for line in self.lazy_read(_rf, chunkSize=self.wcz):
-                        _wf.write(line)
-                _rf.flush()
+            abs_fpath = path.abspath(path.join(fo_nm, cf_nm))
+            # Rename the converted file 
+            rename(abs_fpath, path.abspath(self.file))
             end = time()
             print('Execution Time in Writing the Read File in the earlier Read File %.8f' % (end - st))
 

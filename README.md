@@ -5,15 +5,13 @@ This windows console based app can convert EOL for a file from LF to CRLF &amp; 
 1) Open your console & type the command in the following way:
 ```bash
 #!usr/bin/bash
-python eol_converter_app.py -f mypath/to/file.some_ext -e CRLF -rcz 5 -wcz 6
+python eol_converter_app.py -f mypath/to/file.some_ext -e CRLF -rcz 5
 ```
 -f --> filepath
 
 -e --> Desired Line Ending
 
 -rcz --> Read chunk size(In multiples of 1024 B)
-
--wcz --> Write Chunk Size(In multiples of 1024 B)
 
 ## Special Feature
 Handles large files in an efficient and quick manner by making use of lazy-read & write
