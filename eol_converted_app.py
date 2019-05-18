@@ -23,12 +23,11 @@ class ArgInitializer(ArgumentParser):
                 help='Multiple of 1024 Bytes while reading the data(Helpful in LazyRead of large data)')
 
 
-
-
 class EOLConverter(object):
 
     def __init__(self, arg_init):
-        self.MATCH_REGEX = b'\n' if arg_init.eol == 'CRLF' else b'\r\n'
+        # BugFix in regex matching
+        self.MATCH_REGEX = b'(\n)' if arg_init.eol == 'CRLF' else b'(\r\n)'
         self.REPLACE_REG = b'\r\n' if arg_init.eol == 'CRLF' else b'\n'
         self.rcz = 1024*(arg_init.readChunkSz if arg_init.readChunkSz else 4)
         self.file = arg_init.file
@@ -60,7 +59,8 @@ class EOLConverter(object):
             with open(path.join(fo_nm, cf_nm),'wb') as _wf:
                 for line in self.lazy_read(_file,chunkSize=self.rcz):
                     wline = []
-                    if re.search(mreg, line):    
+                    # Changing the flag to Multiline
+                    if re.search(mreg, line, re.M):
                         wline.append(re.sub(mreg, rpreg, line, 0,  re.M))
                         _wf.write(b''.join(wline))
                     else:
@@ -70,7 +70,10 @@ class EOLConverter(object):
                         ))
                         self._should_write = False
                         break
-        
+        # Pseudo File deletion when file is already in desired EOL
+        if not self._should_write:
+            conv_abs_path = path.abspath(path.join(fo_nm, cf_nm))
+            remove(conv_abs_path)
         end = time()
         print('Execution Time For Reading & Writing in new File %.8f' % (end - st))
 
