@@ -19,7 +19,7 @@ class ArgInitializer(ArgumentParser):
                 help='File Path where the conversion needs to take place')
         self.add_argument('-e','--eol',type=str,required=True
                 ,help='End of line for files in folder / single file')
-        self.add_argument('-rcsz','--readChunkSz',type=int,
+        self.add_argument('-rcz','--readChunkSz',type=int,
                 help='Multiple of 1024 Bytes while reading the data(Helpful in LazyRead of large data)')
 
 
@@ -28,9 +28,9 @@ class ArgInitializer(ArgumentParser):
 class EOLConverter(object):
 
     def __init__(self, arg_init):
-        self.MATCH_REGEX = b'(?<!\r)\n|\r(?!\n)' if arg_init.eol == 'CRLF' else b'(?<=\r)\n|\r(?=\n)'
+        self.MATCH_REGEX = b'\n' if arg_init.eol == 'CRLF' else b'\r\n'
         self.REPLACE_REG = b'\r\n' if arg_init.eol == 'CRLF' else b'\n'
-        self.rcz = 1024*(arg_init.writeChunkSz if arg_init.readChunkSz else 4)
+        self.rcz = 1024*(arg_init.readChunkSz if arg_init.readChunkSz else 4)
         self.file = arg_init.file
         self.eol = arg_init.eol
         self._ext = path.splitext(self.file)[1][1:].strip()
@@ -60,15 +60,17 @@ class EOLConverter(object):
             with open(path.join(fo_nm, cf_nm),'wb') as _wf:
                 for line in self.lazy_read(_file,chunkSize=self.rcz):
                     wline = []
-                    if re.search(mreg, line):      
-                        wline.append(re.sub(mreg, rpreg, line, 0, re.DOTALL))
+                    if re.search(mreg, line):    
+                        wline.append(re.sub(mreg, rpreg, line, 0,  re.M))
                         _wf.write(b''.join(wline))
                     else:
-                        print('The file with name {file} has CRLF EOL'.format(
-                            file=self.file
+                        print('The file with name {file} has desired EOL {eol}'.format(
+                            file=self.file,
+                            eol =self.eol
                         ))
                         self._should_write = False
                         break
+        
         end = time()
         print('Execution Time For Reading & Writing in new File %.8f' % (end - st))
 
