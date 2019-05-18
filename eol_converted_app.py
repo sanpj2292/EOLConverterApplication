@@ -51,8 +51,9 @@ class EOLConverter(object):
             yield data
     
     def _get_pseud_conv_fDet(self):
-        f_nm = re.search(r'(?<=\\)[a-zA-z0-9\+\_\-]+(?=\.)', self.file)
-        return self._get_folder_name(), f_nm.group(0) + '_conv.'+self._ext
+        ex_fnm = self.file.split(path.sep)[-1]
+        f_nm = ex_fnm.split('.')[0]
+        return self._get_folder_name(), f_nm + '_conv.'+self._ext
 
     def read_file(self):
         st = time()
